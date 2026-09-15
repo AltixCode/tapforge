@@ -18,6 +18,7 @@ import { useForgeStore } from "@/store/useForgeStore";
 import { usePremiumStore } from "@/store/usePremiumStore";
 import { forgeTheme } from "@/theme/forge";
 import { useTheme } from "@/theme";
+import { gatedRow } from "@/theme/gatedRows";
 
 const MIN_TOUCH_TARGET = 44;
 /** How often idle output is credited. Four a second is smooth without being wasteful. */
@@ -146,6 +147,7 @@ export default function Forge() {
           const level = levels[upgrade.id] ?? 0;
           const cost = costOf(upgrade.id, level);
           const affordable = balance >= cost;
+          const row = gatedRow(colors, affordable);
           const name = t(upgrade.nameKey as TranslationKey);
           return (
             <Pressable
@@ -162,11 +164,12 @@ export default function Forge() {
                 paddingVertical: spacing.sm,
                 marginTop: spacing.xs,
                 borderRadius: radius.md,
-                backgroundColor: colors.surface,
+                backgroundColor: row.background,
                 borderWidth: 1,
                 borderColor: affordable ? colors.accent : colors.border,
-                // A price you cannot meet is shown, not hidden — it is the next goal.
-                opacity: affordable ? 1 : 0.6,
+                // A price you cannot meet is shown, not hidden — it is the next
+                // goal, so it must stay readable rather than be washed out.
+                opacity: row.opacity,
               }}
             >
               <View style={{ flex: 1 }}>
@@ -175,7 +178,7 @@ export default function Forge() {
                   {t("upgradeLevel", { n: String(level) })}
                 </Text>
               </View>
-              <Text variant="bodyStrong" tone={affordable ? "accent" : "muted"}>
+              <Text variant="bodyStrong" color={row.label}>
                 {format(cost)}
               </Text>
             </Pressable>
