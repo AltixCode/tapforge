@@ -10,6 +10,7 @@ import { isRTLLanguage, t } from '@/i18n';
 import { bootstrapAds } from '@/monetization/ads';
 import { shouldShowAds } from '@/monetization/entitlements';
 import { preloadInterstitial } from '@/monetization/interstitial';
+import { useForgeStore } from "@/store/useForgeStore";
 import { usePremiumStore } from '@/store/usePremiumStore';
 import { ThemeProvider, useTheme } from '@/theme';
 
@@ -26,11 +27,15 @@ function RootNavigator() {
   const isPremium = usePremiumStore((s) => s.isPremium);
   const isReady = usePremiumStore((s) => s.isReady);
   const initialize = usePremiumStore((s) => s.initialize);
+  const hydrateForge = useForgeStore((s) => s.hydrate);
 
   useEffect(() => {
     void initialize();
+    // Restores the balance, upgrades, prestige and the moment the forge was last alive —
+    // which is what offline earnings are measured against.
+    void hydrateForge();
     void SplashScreen.hideAsync();
-  }, [initialize]);
+  }, [initialize, hydrateForge]);
 
   useEffect(() => {
     // Ads bootstrap (and the iOS tracking prompt) is deferred until we know the user is not
