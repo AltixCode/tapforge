@@ -1,0 +1,35 @@
+{
+  "identifier": "BC00109A-84FF-478A-8EF4-CAD80BA3AE26",
+  "nonRenewingSubscriptions": [],
+  "products": [
+    {
+      "displayPrice": "4.99",
+      "familyShareable": false,
+      "internalID": "31BDB61C-47FC-46B4-9C48-5917DD23B2D1",
+      "localizations": [
+        {
+          "description": "tapforge remove ads lifetime unlock",
+          "displayName": "tapforge remove ads",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.altixcode.tapforge.removeads",
+      "referenceName": "tapforge remove ads",
+      "type": "NonConsumable"
+    }
+  ],
+  "settings": {
+    "_applicationInternalID": "",
+    "_developerTeamID": "",
+    "_failTransactionsEnabled": false,
+    "_lastSynchronizedDate": 0,
+    "_locale": "en_US",
+    "_storefront": "USA",
+    "_storeKitErrors": []
+  },
+  "subscriptionGroups": [],
+  "version": {
+    "major": 4,
+    "minor": 0
+  }
+}
