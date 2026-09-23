@@ -340,6 +340,7 @@ export default function Paywall() {
           label={t("restorePurchases")}
           variant="ghost"
           fullWidth
+          loading={isPurchasing}
           onPress={() => {
             setRestoreNotice(null);
             void restore().then((outcome) => {

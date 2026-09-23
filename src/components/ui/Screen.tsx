@@ -1,16 +1,16 @@
-import React, { type ReactNode } from 'react';
+import React, { type ReactNode } from "react";
 import {
   ScrollView,
   StyleSheet,
   View,
   useWindowDimensions,
   type ScrollViewProps,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { useTheme } from '@/theme';
+import { useTheme } from "@/theme";
 
-interface ScreenProps extends Omit<ScrollViewProps, 'children'> {
+interface ScreenProps extends Omit<ScrollViewProps, "children"> {
   children: ReactNode;
   scroll?: boolean;
   /** Extra bottom padding, e.g. to clear a pinned banner ad. */
@@ -59,11 +59,11 @@ export function Screen({
   // screens are. The cap still exists so a 13" landscape screen does not run a
   // single row of text the whole way across.
   const column = {
-    width: '100%' as const,
+    width: "100%" as const,
     maxWidth: isTablet
       ? Math.min(width - spacing.xl * 2, TABLET_MAX_WIDTH)
       : CONTENT_MAX_WIDTH,
-    alignSelf: 'center' as const,
+    alignSelf: "center" as const,
   };
 
   const padding = {
@@ -72,13 +72,15 @@ export function Screen({
     // navigation header already sits in the notch, so adding it there would
     // push the content down twice; without a header the first line of text
     // renders *under* the status bar, which is what this fixes.
-    paddingTop: topInset ? insets.top : 0,
+    paddingTop: topInset ? Math.max(insets.top, 54) + spacing.xs : 0,
     paddingBottom: insets.bottom + bottomInset + spacing.xl,
   };
 
   if (!scroll) {
     return (
-      <View style={[styles.flex, { backgroundColor: colors.background }, style]}>
+      <View
+        style={[styles.flex, { backgroundColor: colors.background }, style]}
+      >
         <View style={[styles.flex, padding, column, fill]}>{children}</View>
       </View>
     );

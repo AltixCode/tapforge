@@ -1,7 +1,14 @@
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef } from "react";
-import { Alert, Pressable, StyleSheet, View } from "react-native";
+import {
+  Alert,
+  Animated,
+  Pressable,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+} from "react-native";
 
 import { BannerAdSlot } from "@/components/BannerAdSlot";
 import { Button, Screen, Text } from "@/components/ui";
@@ -45,6 +52,31 @@ export default function Forge() {
 
   const anvil = forgeTheme(themeName);
   const collected = useRef(false);
+
+  // The anvil is the whole interaction, so it earns the lower-centre of the
+  // screen (easiest to reach one-handed) rather than sitting flush under the
+  // balance the way a static card would. A third of the viewport, with a
+  // floor for small phones, reads as "the thing to tap" without demanding a
+  // scroll to see the upgrade list beneath it.
+  const { height: windowHeight } = useWindowDimensions();
+  const tapAreaHeight = Math.max(220, Math.round(windowHeight * 0.34));
+  const [tapScale] = React.useState(() => new Animated.Value(1));
+  const onPressIn = useCallback(() => {
+    Animated.spring(tapScale, {
+      toValue: 0.94,
+      useNativeDriver: true,
+      speed: 40,
+      bounciness: 6,
+    }).start();
+  }, [tapScale]);
+  const onPressOut = useCallback(() => {
+    Animated.spring(tapScale, {
+      toValue: 1,
+      useNativeDriver: true,
+      speed: 20,
+      bounciness: 10,
+    }).start();
+  }, [tapScale]);
 
   // Offline earnings are collected once per mount, before the ticker starts, so the two
   // cannot both credit the same seconds.
@@ -116,32 +148,40 @@ export default function Forge() {
           ) : null}
         </View>
 
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={t("tapPrompt")}
-          onPress={onTap}
+        <Animated.View
           style={{
-            marginTop: spacing.lg,
-            minHeight: 180,
-            alignItems: "center",
-            justifyContent: "center",
-            borderRadius: radius.lg,
-            backgroundColor: anvil.anvil,
-            borderWidth: 3,
-            borderColor: anvil.glow,
+            marginTop: spacing["2xl"],
+            transform: [{ scale: tapScale }],
           }}
         >
-          <Text variant="display" color={anvil.glow}>
-            {t("tapPrompt")}
-          </Text>
-          <Text
-            variant="caption"
-            color={anvil.ink}
-            style={{ marginTop: spacing.xs }}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t("tapPrompt")}
+            onPress={onTap}
+            onPressIn={onPressIn}
+            onPressOut={onPressOut}
+            style={{
+              minHeight: tapAreaHeight,
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: radius.lg,
+              backgroundColor: anvil.anvil,
+              borderWidth: 3,
+              borderColor: anvil.glow,
+            }}
           >
-            {t("perTapLabel", { n: format(tapPreview) })}
-          </Text>
-        </Pressable>
+            <Text variant="display" color={anvil.glow}>
+              {t("tapPrompt")}
+            </Text>
+            <Text
+              variant="caption"
+              color={anvil.ink}
+              style={{ marginTop: spacing.xs }}
+            >
+              {t("perTapLabel", { n: format(tapPreview) })}
+            </Text>
+          </Pressable>
+        </Animated.View>
 
         <Text variant="micro" tone="faint" style={{ marginTop: spacing.xl }}>
           {t("upgradesTitle").toUpperCase()}
@@ -178,7 +218,10 @@ export default function Forge() {
               <View style={{ flex: 1 }}>
                 <Text variant="body">{name}</Text>
                 <Text variant="caption" tone="muted">
-                  {t("upgradeLevel", { n: String(level) })}
+                  {t("upgradeLevel", { n: String(level) })} ·{" "}
+                  {upgrade.kind === "tap"
+                    ? t("upgradeEffectTap", { n: String(upgrade.gain) })
+                    : t("upgradeEffectIdle", { n: String(upgrade.gain) })}
                 </Text>
               </View>
               <Text variant="bodyStrong" color={row.label}>
