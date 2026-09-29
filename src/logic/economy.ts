@@ -33,6 +33,14 @@ export const PREMIUM_OFFLINE_HOURS = 24;
 /** Lifetime output before prestige is worth anything at all. */
 const PRESTIGE_THRESHOLD = 1e6;
 
+/**
+ * Ordered cheapest to most expensive, with each upgrade's per-level gain rising
+ * to match -- a TestFlight tester noticed the previous order ("hammer, anvil,
+ * apprentice, bellows, furnace") priced a 250-cost upgrade *before* a 50-cost
+ * one, so the list did not read top-to-bottom as "what to buy next". The list
+ * itself is what the UI renders in order (`app/index.tsx` maps `UPGRADES`
+ * directly), so the fix is the data, not the screen.
+ */
 export const UPGRADES: Upgrade[] = [
   {
     id: "hammer",
@@ -43,20 +51,20 @@ export const UPGRADES: Upgrade[] = [
     gain: 1,
   },
   {
-    id: "anvil",
-    nameKey: "upgradeAnvil",
-    kind: "tap",
-    baseCost: 250,
-    growth: 1.18,
-    gain: 8,
-  },
-  {
     id: "apprentice",
     nameKey: "upgradeApprentice",
     kind: "idle",
     baseCost: 50,
     growth: 1.16,
     gain: 1,
+  },
+  {
+    id: "anvil",
+    nameKey: "upgradeAnvil",
+    kind: "tap",
+    baseCost: 250,
+    growth: 1.18,
+    gain: 8,
   },
   {
     id: "bellows",

@@ -16,6 +16,61 @@ import {
 
 const none: Levels = {};
 
+describe("the upgrade list is cheapest-to-most-expensive", () => {
+  // A TestFlight tester noticed the previous order priced anvil (250) before
+  // apprentice (50) -- a cheaper upgrade sitting below a pricier one, so the
+  // list did not read top-to-bottom as "what to buy next". `app/index.tsx`
+  // renders `UPGRADES` in array order with no re-sorting, so the list itself
+  // has to carry this invariant.
+  it("has every upgrade's cost strictly higher than the one before it", () => {
+    for (let i = 1; i < UPGRADES.length; i += 1) {
+      expect(UPGRADES[i]!.baseCost).toBeGreaterThan(UPGRADES[i - 1]!.baseCost);
+    }
+  });
+
+  it("has every upgrade's per-level gain no lower than the one before it — cost and reward scale together", () => {
+    for (let i = 1; i < UPGRADES.length; i += 1) {
+      expect(UPGRADES[i]!.gain).toBeGreaterThanOrEqual(UPGRADES[i - 1]!.gain);
+    }
+  });
+});
+
+describe("tap upgrades and idle upgrades are deliberately separate economies", () => {
+  // Feedback read as "apprentice/bellows/furnace don't increase points per
+  // tap, when they should" -- verified against the code and the in-app copy
+  // (`upgradeEffectIdle`, "+{n} per second") rather than assumed to be a bug.
+  // Hammer and anvil are the tap-value upgrades; apprentice, bellows and
+  // furnace are the idle (per-second) upgrades, exactly as their own row
+  // describes. Making every upgrade raise both numbers would make the
+  // tap/idle split meaningless. This test pins the intended shape down so a
+  // future change cannot quietly blur it.
+  it("only tap-kind upgrades move tapValue", () => {
+    const idleUpgrades = UPGRADES.filter((u) => u.kind === "idle");
+    const withIdleLevels: Levels = Object.fromEntries(
+      idleUpgrades.map((u) => [u.id, 10]),
+    );
+    expect(tapValue(withIdleLevels, 1, false)).toBe(tapValue(none, 1, false));
+  });
+
+  it("only idle-kind upgrades move outputPerSecond", () => {
+    const tapUpgrades = UPGRADES.filter((u) => u.kind === "tap");
+    const withTapLevels: Levels = Object.fromEntries(
+      tapUpgrades.map((u) => [u.id, 10]),
+    );
+    expect(outputPerSecond(withTapLevels, 1, false)).toBe(
+      outputPerSecond(none, 1, false),
+    );
+  });
+
+  it("apprentice, bellows and furnace each raise idle output, exactly as advertised", () => {
+    for (const id of ["apprentice", "bellows", "furnace"]) {
+      expect(outputPerSecond({ [id]: 3 }, 1, false)).toBeGreaterThan(
+        outputPerSecond(none, 1, false),
+      );
+    }
+  });
+});
+
 describe("costOf — a geometric curve", () => {
   it("is the base cost at level zero", () => {
     for (const upgrade of UPGRADES) {

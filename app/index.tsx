@@ -1,3 +1,4 @@
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef } from "react";
@@ -12,6 +13,7 @@ import {
 
 import { BannerAdSlot } from "@/components/BannerAdSlot";
 import { Button, Screen, Text } from "@/components/ui";
+import { useSoundEffects } from "@/hooks/useSoundEffects";
 import { t, type TranslationKey } from "@/i18n";
 import {
   FREE_OFFLINE_HOURS,
@@ -52,6 +54,7 @@ export default function Forge() {
 
   const anvil = forgeTheme(themeName);
   const collected = useRef(false);
+  const playSound = useSoundEffects();
 
   // The anvil is the whole interaction, so it earns the lower-centre of the
   // screen (easiest to reach one-handed) rather than sitting flush under the
@@ -60,6 +63,16 @@ export default function Forge() {
   // scroll to see the upgrade list beneath it.
   const { height: windowHeight } = useWindowDimensions();
   const tapAreaHeight = Math.max(220, Math.round(windowHeight * 0.34));
+  // A TestFlight tester found the anvil sitting right under the balance —
+  // reachable, but not the lower-centre one-handed zone the comment above
+  // already intended. A window-relative top margin (rather than a fixed
+  // token) pushes it down toward that zone on any phone without needing a
+  // flex spacer inside the ScrollView, which would collapse to nothing the
+  // moment the upgrade list makes the content taller than the screen.
+  const tapAreaTopMargin = Math.max(
+    spacing["2xl"],
+    Math.round(windowHeight * 0.1),
+  );
   const [tapScale] = React.useState(() => new Animated.Value(1));
   const onPressIn = useCallback(() => {
     Animated.spring(tapScale, {
@@ -102,14 +115,21 @@ export default function Forge() {
 
   const onTap = useCallback(() => {
     tap(isPremium);
+    playSound("tap");
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  }, [tap, isPremium]);
+  }, [tap, isPremium, playSound]);
 
   const onBuy = useCallback(
     (id: string) => {
-      if (buy(id, isPremium) === "bought") void Haptics.selectionAsync();
+      if (buy(id, isPremium) !== "bought") return;
+      void Haptics.selectionAsync();
+      // Every fifth level of an upgrade is a milestone -- a slightly bigger,
+      // more celebratory sound than the routine purchase chime, without
+      // needing a whole new milestone concept in the economy layer.
+      const newLevel = useForgeStore.getState().levels[id] ?? 0;
+      playSound(newLevel > 0 && newLevel % 5 === 0 ? "pop" : "success");
     },
-    [buy, isPremium],
+    [buy, isPremium, playSound],
   );
 
   const onPrestige = useCallback(() => {
@@ -150,7 +170,7 @@ export default function Forge() {
 
         <Animated.View
           style={{
-            marginTop: spacing["2xl"],
+            marginTop: tapAreaTopMargin,
             transform: [{ scale: tapScale }],
           }}
         >
@@ -170,7 +190,12 @@ export default function Forge() {
               borderColor: anvil.glow,
             }}
           >
-            <Text variant="display" color={anvil.glow}>
+            <MaterialCommunityIcons name="anvil" size={56} color={anvil.glow} />
+            <Text
+              variant="display"
+              color={anvil.glow}
+              style={{ marginTop: spacing.sm }}
+            >
               {t("tapPrompt")}
             </Text>
             <Text
